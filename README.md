@@ -5,7 +5,7 @@ DB management, APIs, web portals etc. This project is still experimental.
 
 * install rethinkDB: https://www.rethinkdb.com/docs/install (on OS-X: `brew update && brew install rethinkdb`)
 
-* you also need `npm`, `node`, `python`, `git`. Homebrew helps!
+* you also need `npm`, `node`, `python2.7`, `git`. Homebrew helps!
 
 * clone the submodules: `git submodule update --init --recursive`
 
@@ -16,4 +16,7 @@ DB management, APIs, web portals etc. This project is still experimental.
 # how to run
 
 * start rethinkdb locally: `rethinkdb` (admin data at `http://localhost:8080/`)
+
 * start chateau: `npm run chateau` (accessed via `http://localhost:3000`)
+
+* create the Db & tables: `python scripts/createTables.py`
