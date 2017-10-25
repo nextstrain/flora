@@ -1,0 +1,16 @@
+{
+  "name": "flora",
+  "version": "0.0.1",
+  "description": "Middle layer between data and database. A component of the NextStrain.",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/blab/flora"
+  },
+  "license": "AGPL",
+  "author": "James Hadfield, Barney Potter, Trevor Bedford",
+  "dependencies": {
+  },
+  "scripts": {
+    "chateau": "./chateau/bin/chateau"
+  }
+}
