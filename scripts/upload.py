@@ -4,6 +4,7 @@ import rethinkdb as r
 import argparse
 from pdb import set_trace
 from collections import defaultdict
+import hashlib
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--path', default='input_data/', help="Path to directory containing upload file, default is input_data/")
@@ -13,6 +14,30 @@ parser.add_argument('--path', default='input_data/', help="Path to directory con
 parser.add_argument('--filename', '--file', '-f', required=True, help="file to upload to rethink database")
 parser.add_argument('--change_db', default=False, action="store_true", help="perform changes to the DB (default: False)")
 
+
+def ensure_sacra_file_seen(filename, change_db):
+    hasher = hashlib.md5()
+    with open(filename, 'rb') as f:
+        buf = f.read()
+        hasher.update(buf)
+    md5 = hasher.hexdigest();
+
+    print("Sacra file had hash {}".format(md5))
+
+    with open("./.sacra_hashes", 'rU') as f:
+        for line in f:
+            print(line)
+            if line.strip() == md5:
+                print("This (sacra) file has been seen before. Proceeding.")
+                return # irrelevant if we want to change the DB - we've seen this before
+    ## if we're here, then the file hasn't been seen before
+    if change_db:
+        print("Cannot continue (with the possibility of modifying the DB) as this sacra file has not been seen before.")
+        sys.exit(2)
+    else:
+        print("First time seeing this sarce file.")
+        with open("./.sacra_hashes", 'a+') as f:
+            f.write(md5 + "\n")
 
 def parse_sacra_json(filename):
     try:
@@ -90,7 +115,9 @@ def change_db_via_json(table, sacra, pkey, do):
 
 if __name__=="__main__":
     args = parser.parse_args()
-    sacra = parse_sacra_json(os.path.join(args.path, args.filename))
+    sacra_filename = os.path.join(args.path, args.filename)
+    sacra = parse_sacra_json(sacra_filename)
+    ensure_sacra_file_seen(sacra_filename, args.change_db)
 
     conn = r.connect("localhost", 28015).repl()
     dbname = "test"

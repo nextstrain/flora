@@ -11,3 +11,6 @@ rethinkdb_data/
 
 # Other
 .DS_Store
+
+## store of hashes
+.sacra_hashes
