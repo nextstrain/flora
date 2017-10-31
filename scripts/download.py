@@ -61,6 +61,8 @@ def resolve_duplicates(data, resolve_method):
     Finds strains with multiple sequences
     Removes all but one of these (from data)
     '''
+    logger.info("to do: when resolving need to collapse acessions field in pathogens table")
+
     duplicated_strains = defaultdict(list)
     idxs_to_drop = []
     for idx, row in enumerate(data):
@@ -114,6 +116,18 @@ def download_data_via_query(r, db, tableNames, locus, lineage, resolve_method, *
     return data
 
 
+def data_to_tables(data, db, tableNames):
+    """
+    note that rows don't have to be consistent in tables format - undefined / null values should be skipped
+    e.g. a row may have "age" and the subsequent row may not
+    """
+    tables = defaultdict(list)
+    for tableName in tableNames:
+        fieldNames = db.table(tableName)[0].run().keys()
+        for row in data:
+            tables[tableName].append({fieldName: row[fieldName] for fieldName in fieldNames if fieldName in row and row[fieldName] is not None})
+    return tables
+
 if __name__=="__main__":
     args = parser.parse_args()
     if not args.loglevel: args.loglevel = logging.INFO
@@ -131,8 +145,10 @@ if __name__=="__main__":
 
     ## DOWNLOAD SEQUENCES ##
     if args.sequences:
-        data = download_data_via_query(r=r, db=r.db(dbname), tableNames=["sequences", "pathogens"], **vars(args))
+        tableNames = ["sequences", "pathogens"]
+        data = download_data_via_query(r=r, db=r.db(dbname), tableNames=tableNames, **vars(args))
         if infer_ftype(args.filename) == "fasta":
             write_fasta(data, args.filename)
         elif infer_ftype(args.filename) == "json":
-            write_json(data, args.filename)
+            tables = data_to_tables(data=data, db=r.db(dbname), tableNames=tableNames)
+            write_json(tables, args.filename)
