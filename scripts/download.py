@@ -6,6 +6,7 @@ from pdb import set_trace
 from collections import defaultdict
 # import hashlib
 import logging
+import random
 
 parser = argparse.ArgumentParser()
 # parser.add_argument('--filename', '--file', '-f', required=True, help="file to write")
@@ -15,7 +16,7 @@ parser.add_argument('--sequences', default=False, action="store_true", help="Dow
 parser.add_argument('--filename', '--file', '-f', required=True, help="Output filename (type is inferred from suffix)")
 parser.add_argument('--locus', default=None, help="Sequence locus to download (only used with --sequences)")
 parser.add_argument('--lineage', default=None, help="Sequence lineage to download (only used with --sequences)")
-# parser.add_argument('--resolve', default="random", help="How to resolve duplicates (default: 'random')")
+parser.add_argument('--resolve_method', default="random", help="How to resolve duplicates (default: 'random')")
 # parser.add_argument("--verbose", "-v", action="store_const", dest="loglevel", const=logging.INFO, help="Enable verbose logging")
 parser.add_argument("--debug", "-d", action="store_const", dest="loglevel", const=logging.DEBUG, help="Enable debugging logging")
 
@@ -47,27 +48,70 @@ def add_filter_to_query(query, filterName, filterValue):
     logger = logging.getLogger(__name__)
     if type(filterValue) is str:
         logger.info("Filtering to {} {}".format(filterName, filterValue))
-        query.filter(lambda r: r[filterName] == filterValue)
+        return query.filter(lambda r: r[filterName] == filterValue)
     elif type(filterValue) is list:
         logger.info("Filtering to {} {}".format(filterName, filterValue))
-        query.filter(lambda r: r[filterName] in filterValue)
+        return query.filter(lambda r: r[filterName] in filterValue)
     else:
         logger.info("Skpping filtering of {} - incorrect type".format(filterName))
+        return query
+
+def resolve_duplicates(data, resolve_method):
+    '''
+    Finds strains with multiple sequences
+    Removes all but one of these (from data)
+    '''
+    duplicated_strains = defaultdict(list)
+    idxs_to_drop = []
+    for idx, row in enumerate(data):
+        duplicated_strains[row['strain']].append(idx)
+    duplicated_strains = {k: v for k, v in duplicated_strains.iteritems() if len(v) > 1}
+
+    if duplicated_strains == {}:
+        logger.info("No duplicated isolates in data")
+        return data
+
+    if resolve_method == "random":
+        for k, idxs in duplicated_strains.iteritems():
+            keep_idx = random.choice(idxs)
+            idxs_to_drop.extend([x for x in idxs if x != keep_idx])
+    else:
+        logger.info("Skpping removal of duplicates - unknown resolve_method")
+        return data
+
+    count = 0
+    for i in sorted(idxs_to_drop, reverse=True):
+        del data[i]
+        count += 1
+    logger.info("Removed {} duplicated sequences using method \"{}\"".format(count, resolve_method))
+    return data
 
 
+def download_data_via_query(r, db, tableNames, locus, lineage, resolve_method, **kwargs):
+    """
+    The approach taken here is to merge / join into a single table
+    and then either write each row to FASTA or separate into tables and write to JSON.
+    Why join then separate? It ensures removal of unwanted rows (e.g. isolates without sequences, references without strains...)
+    Note that rows *may* be duplicated if, for example, we don't resolve duplicates
 
-def download_tables_via_query(r, db, tableNames, locus, lineage, **kwargs):
+    to explore: filter the sequences before the inner join
+    """
     logger = logging.getLogger(__name__)
     # acc_strain_map = {pair[0]:pair[1] for row in db.table("pathogens").pluck('strain', 'accessions').run() for pair in [[acc, row['strain']] for acc in row['accessions']]}
 
     ### join the sequences and isolates tables on "accession" - will ignore rows without matches
     query = db.table('sequences').inner_join(db.table('pathogens'), lambda srow, prow: prow['accessions'].contains(srow['accession'])).zip()
     if locus:
-        add_filter_to_query(query, 'locus', locus)
+        query = add_filter_to_query(query, 'locus', locus)
     if lineage:
-        add_filter_to_query(query, 'lineage', lineage)
+        query = add_filter_to_query(query, 'lineage', lineage)
 
-    return list(query.run())
+    logger.info("to do: merge in publication data")
+
+    data = list(query.run())
+    data = resolve_duplicates(data, resolve_method)
+
+    return data
 
 
 if __name__=="__main__":
