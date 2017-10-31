@@ -14,3 +14,5 @@ rethinkdb_data/
 
 ## store of hashes
 .sacra_hashes
+
+downloaded_data/

@@ -7,11 +7,11 @@ from collections import defaultdict
 import hashlib
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--path', default='input_data/', help="Path to directory containing upload file, default is input_data/")
+# parser.add_argument('--path', default='input_data/', help="Path to directory containing upload file, default is input_data/")
 # parser.add_argument('--rethink_host', default=None, help="rethink host url")
 # parser.add_argument('--auth_key', default=None, help="auth_key for rethink database")
 # parser.add_argument('--local', default=False, action="store_true",  help ="connect to local instance of rethinkdb database")
-parser.add_argument('--filename', '--file', '-f', required=True, help="file to upload to rethink database")
+parser.add_argument('--filename', '--file', '-f', required=True, help="file to upload to rethink database (full path)")
 parser.add_argument('--change_db', default=False, action="store_true", help="perform changes to the DB (default: False)")
 
 
@@ -115,7 +115,7 @@ def change_db_via_json(table, sacra, pkey, do):
 
 if __name__=="__main__":
     args = parser.parse_args()
-    sacra_filename = os.path.join(args.path, args.filename)
+    sacra_filename = args.filename
     sacra = parse_sacra_json(sacra_filename)
     ensure_sacra_file_seen(sacra_filename, args.change_db)
 
@@ -129,3 +129,5 @@ if __name__=="__main__":
     if "pathogens" in sacra:
         print("TABLE: pathogens")
         change_db_via_json(r.db(dbname).table("pathogens"), sacra["pathogens"], "strain", args.change_db)
+
+    ## the other tables (geo etc) should be updated elsewhere. Authors is different.
