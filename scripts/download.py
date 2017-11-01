@@ -128,6 +128,27 @@ def data_to_tables(data, db, tableNames):
             tables[tableName].append({fieldName: row[fieldName] for fieldName in fieldNames if fieldName in row and row[fieldName] is not None})
     return tables
 
+def write_fasta(data, headers, filename):
+    """
+    the data already arrives in rows - our task is to simply write these as FASTA entries...
+    """
+    missingCounts = [0 for x in headers]
+    def getEntry(row, idx, name):
+        if name in row and row[name] is not None:
+            return row[name]
+        missingCounts[idx] += 1
+        return ''
+    logger = logging.getLogger(__name__)
+    with open(filename, 'w') as f:
+        for row in data:
+            f.write(">"+'|'.join([getEntry(row, i, x) for i, x in enumerate(headers)])+"\n")
+            f.write(row['sequence'])
+            f.write("\n")
+    logger.info("FASTA file written")
+    for i, n in enumerate(headers):
+        if missingCounts[i] != 0:
+            logger.debug("{}/{} samples were missing {}".format(missingCounts[i], len(data), n))
+
 if __name__=="__main__":
     args = parser.parse_args()
     if not args.loglevel: args.loglevel = logging.INFO
@@ -148,7 +169,9 @@ if __name__=="__main__":
         tableNames = ["sequences", "pathogens"]
         data = download_data_via_query(r=r, db=r.db(dbname), tableNames=tableNames, **vars(args))
         if infer_ftype(args.filename) == "fasta":
-            write_fasta(data, args.filename)
+            # store this somewhere else... command line arg?
+            fasta_headers = ['strain', 'accession', 'date', 'country', 'division', 'authors', 'url', 'title', 'journal', 'paper_url']
+            write_fasta(data=data, headers=fasta_headers, filename=args.filename)
         elif infer_ftype(args.filename) == "json":
             tables = data_to_tables(data=data, db=r.db(dbname), tableNames=tableNames)
             write_json(tables, args.filename)
