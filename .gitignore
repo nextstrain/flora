@@ -16,3 +16,4 @@ rethinkdb_data/
 .sacra_hashes
 
 downloaded_data/
+input_data/
