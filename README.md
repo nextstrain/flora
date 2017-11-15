@@ -1,7 +1,7 @@
 # flora
 DB management, APIs, web portals etc. This project is still experimental.
 
-# installation
+# prerequisites
 
 * install rethinkDB: https://www.rethinkdb.com/docs/install (on OS-X: `brew update && brew install rethinkdb`)
 
@@ -15,8 +15,17 @@ DB management, APIs, web portals etc. This project is still experimental.
 
 # how to run
 
+## locally running rethinkDB server
+
 * start rethinkdb locally: `rethinkdb` (admin data at `http://localhost:8080/`)
 
 * start chateau: `npm run chateau` (accessed via `http://localhost:3000`)
 
-* create the Db & tables: `python scripts/createTables.py`
+
+## common commands (to be expanded into a tutorial / documentation)
+
+Everything is run via `python scripts/run [global arguments] CMD [command arguments]`
+
+* `python scripts/run.py createTables`
+
+* `python scripts/run.py clearTables`
