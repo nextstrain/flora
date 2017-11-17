@@ -5,9 +5,55 @@ from pdb import set_trace
 from collections import defaultdict
 import logging
 import random
+from utils.connect import connect
 
-def download(debug, database, dbdump, format, filename, resolve_method, subtype, locus, **kwargs):
-    pass
+
+#     ## DOWNLOAD ALL ##
+#     if args.everything:
+#         assert(infer_ftype(args.filename) == "json")
+#         tables = download_all_tables(r.db(dbname))
+#         write_json(tables, args.filename)
+#
+#     ## DOWNLOAD SEQUENCES ##
+#     if args.sequences:
+#         tableNames = ["sequences", "pathogens"]
+#         data = download_data_via_query(r=r, db=r.db(dbname), tableNames=tableNames, **vars(args))
+#         if infer_ftype(args.filename) == "fasta":
+#             # store this somewhere else... command line arg?
+#             fasta_headers = ['strain', 'accession', 'date', 'country', 'division', 'authors', 'url', 'title', 'journal', 'paper_url']
+#             write_fasta(data=data, headers=fasta_headers, filename=args.filename)
+#         elif infer_ftype(args.filename) == "json":
+#             tables = data_to_tables(data=data, db=r.db(dbname), tableNames=tableNames)
+#             write_json(tables, args.filename)
+
+def download(database, dbdump, outformat, filename, resolve_method, subtype, locus, **kwargs):
+    rdb = connect(database)
+    logger = logging.getLogger(__name__)
+
+    if not outformat:
+        outformat = infer_ftype(filename)
+
+    ## some basic checks
+    if dbdump:
+        if outformat != "json":
+            logger.error("Filtype must be json to save entire DB")
+            sys.exit(2)
+
+    data = download_from_db(rdb, dbdump, locus, subtype, resolve_method, **kwargs)
+    write_data(outformat, filename, data)
+
+def write_data(outformat, filename, data):
+    logger = logging.getLogger(__name__)
+    f = open(filename, 'w')
+    if outformat is "json":
+        json.dump(data, f, indent=2)
+        logger.info("Successfully saved data to {} ({} format)".format(filename, outformat))
+
+    f.close()
+
+
+
+
 def write_json(data, fname):
     logger = logging.getLogger(__name__)
     with open(fname, 'w') as f:
@@ -16,9 +62,9 @@ def write_json(data, fname):
 
 def infer_ftype(fname):
     logger = logging.getLogger(__name__)
-    if (args.filename.endswith(".fasta")):
+    if (fname.endswith(".fasta")):
         return "fasta"
-    elif (args.filename.endswith(".json")):
+    elif (fname.endswith(".json")):
         return "json"
     logger.error("Unknown output filetype. Fatal.")
     sys.exit(2)
@@ -77,9 +123,8 @@ def resolve_duplicates(data, resolve_method):
     return data
 
 
-def download_data_via_query(r, db, tableNames, locus, lineage, resolve_method, **kwargs):
-    """
-    The approach taken here is to merge / join into a single table
+def download_from_db(rdb, dbdump, locus, subtype, resolve_method, **kwargs):
+    """ download data and keep in the tables format (i.e. don't merge)
     and then either write each row to FASTA or separate into tables and write to JSON.
     Why join then separate? It ensures removal of unwanted rows (e.g. isolates without sequences, references without strains...)
     Note that rows *may* be duplicated if, for example, we don't resolve duplicates
@@ -87,22 +132,78 @@ def download_data_via_query(r, db, tableNames, locus, lineage, resolve_method, *
     to explore: filter the sequences before the inner join
     """
     logger = logging.getLogger(__name__)
-    # acc_strain_map = {pair[0]:pair[1] for row in db.table("pathogens").pluck('strain', 'accessions').run() for pair in [[acc, row['strain']] for acc in row['accessions']]}
+    table_names = r.table_list().run()
+    expected_table_names = ["dbinfo", "strains", "samples", "sequences", "attributions"]
+    assert(len(set(expected_table_names) - set(table_names)) == 0)
+    if set(table_names) - set(expected_table_names):
+        logger.info("The DB contains these (unexpected) tables: {}".format([x for x in table_names if x not in expected_table_names]))
 
-    ### join the sequences and isolates tables on "accession" - will ignore rows without matches
-    query = db.table('sequences').inner_join(db.table('pathogens'), lambda srow, prow: prow['accessions'].contains(srow['accession'])).zip()
-    if locus:
-        query = add_filter_to_query(query, 'locus', locus)
-    if lineage:
-        query = add_filter_to_query(query, 'lineage', lineage)
+    ## 1. strains table (filter on subtype)
+    q = {}
+    q["strains"] = rdb.table("strains")
+    if subtype is not None:
+        logger.debug("Filtering strains table to subtype {}".format(subtype))
+        q["strains"] = q["strains"].filter({'subtype': subtype})
 
-    logger.info("to do: merge in publication data")
+    q["samples"] = rdb.table("samples")
 
-    data = list(query.run())
-    data = resolve_duplicates(data, resolve_method)
+    q["sequences"] = rdb.table("sequences")
+    if locus is not None:
+        logger.debug("Filtering sequences table to locus {}".format(locus))
+        q["sequences"] = q["sequences"].filter({'sequence_locus': locus})
 
-    return data
+    q["attributions"] = rdb.table("attributions")
+    q["dbinfo"] = rdb.table("dbinfo")
 
+    j = {}
+    for name, query in q.iteritems():
+        j[name] = query.coerce_to('array').run()
+    return j
+
+    #
+    # ## Strains
+    # rdb.
+    #
+    #
+    # ### join the sequences and isolates tables on "accession" - will ignore rows without matches
+    # query = db.table('sequences').inner_join(db.table('pathogens'), lambda srow, prow: prow['accessions'].contains(srow['accession'])).zip()
+    # if locus:
+    #     query = add_filter_to_query(query, 'locus', locus)
+    # if lineage:
+    #     query = add_filter_to_query(query, 'lineage', lineage)
+    #
+    # logger.info("to do: merge in publication data")
+    #
+    # data = list(query.run())
+    # data = resolve_duplicates(data, resolve_method)
+    #
+    # return data
+
+# def download_from_db(rdb, locus, subtype, resolve_method, **kwargs):
+#     """
+#     The approach taken here is to merge / join into a single table
+#     and then either write each row to FASTA or separate into tables and write to JSON.
+#     Why join then separate? It ensures removal of unwanted rows (e.g. isolates without sequences, references without strains...)
+#     Note that rows *may* be duplicated if, for example, we don't resolve duplicates
+#
+#     to explore: filter the sequences before the inner join
+#     """
+#     logger = logging.getLogger(__name__)
+#     # acc_strain_map = {pair[0]:pair[1] for row in db.table("pathogens").pluck('strain', 'accessions').run() for pair in [[acc, row['strain']] for acc in row['accessions']]}
+#
+#     ### join the sequences and isolates tables on "accession" - will ignore rows without matches
+#     query = db.table('sequences').inner_join(db.table('pathogens'), lambda srow, prow: prow['accessions'].contains(srow['accession'])).zip()
+#     if locus:
+#         query = add_filter_to_query(query, 'locus', locus)
+#     if lineage:
+#         query = add_filter_to_query(query, 'lineage', lineage)
+#
+#     logger.info("to do: merge in publication data")
+#
+#     data = list(query.run())
+#     data = resolve_duplicates(data, resolve_method)
+#
+#     return data
 
 def data_to_tables(data, db, tableNames):
     """
@@ -136,30 +237,3 @@ def write_fasta(data, headers, filename):
     for i, n in enumerate(headers):
         if missingCounts[i] != 0:
             logger.debug("{}/{} samples were missing {}".format(missingCounts[i], len(data), n))
-
-if __name__=="__main__":
-    args = parser.parse_args()
-    if not args.loglevel: args.loglevel = logging.INFO
-    logging.basicConfig(level=args.loglevel, format='%(asctime)-15s %(message)s')
-    logger = logging.getLogger(__name__)
-
-    conn = r.connect("localhost", 28015).repl()
-    dbname = "test"
-
-    ## DOWNLOAD ALL ##
-    if args.everything:
-        assert(infer_ftype(args.filename) == "json")
-        tables = download_all_tables(r.db(dbname))
-        write_json(tables, args.filename)
-
-    ## DOWNLOAD SEQUENCES ##
-    if args.sequences:
-        tableNames = ["sequences", "pathogens"]
-        data = download_data_via_query(r=r, db=r.db(dbname), tableNames=tableNames, **vars(args))
-        if infer_ftype(args.filename) == "fasta":
-            # store this somewhere else... command line arg?
-            fasta_headers = ['strain', 'accession', 'date', 'country', 'division', 'authors', 'url', 'title', 'journal', 'paper_url']
-            write_fasta(data=data, headers=fasta_headers, filename=args.filename)
-        elif infer_ftype(args.filename) == "json":
-            tables = data_to_tables(data=data, db=r.db(dbname), tableNames=tableNames)
-            write_json(tables, args.filename)

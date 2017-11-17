@@ -31,7 +31,7 @@ if __name__=="__main__":
 
     parser_download = subparsers.add_parser("download", help="Download data")
     parser_download.add_argument('--dbdump', default=False, action="store_true", help="Download the entire DB -> JSON. Without this, there will be a 1-1 mapping between strains, samples and sequences.")
-    parser_download.add_argument("--format", type=str, choices=['json', 'fasta'], help="output format")
+    parser_download.add_argument("--outformat", type=str, choices=['json', 'fasta'], help="output format")
     parser_download.add_argument("--filename", "-f", required=True, help="file to write")
     parser_download.add_argument('--resolve_method', default="random", help="How to resolve duplicates (default: 'random')")
     parser_download.add_argument('--subtype', default=None, help="Restrict to this subtype (works with dbdump)")
@@ -46,5 +46,4 @@ if __name__=="__main__":
     if not args.loglevel:
         args.loglevel = logging.INFO
     logging.basicConfig(level=args.loglevel, format='%(asctime)s - %(name)-20s - %(levelname)-8s - %(message)s')
-
     args.func(**vars(args))

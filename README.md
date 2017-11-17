@@ -24,8 +24,11 @@ DB management, APIs, web portals etc. This project is still experimental.
 
 ## common commands (to be expanded into a tutorial / documentation)
 
-Everything is run via `python scripts/run [global arguments] CMD [command arguments]`
+Everything is run via `python scripts/run [global arguments] CMD [command arguments]`.
+Global arguments include `--debug` to increase logging verbosity, and `--database <str>` to define the database (pathogen) name (_currently defaults to "test", will be required at some point_).
+To see command arguments, run `python scripts/run CMD -h`.
 
 * `python scripts/run.py createTables`
-
 * `python scripts/run.py clearTables`
+* `python scripts/run.py upload --filename <PATH> --preview`
+* `python scripts/run.py download --dbdump --filename downloaded_data/db.json`
