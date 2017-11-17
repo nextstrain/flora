@@ -1,25 +1,13 @@
 from __future__ import division, print_function
 import os, json, sys
 import rethinkdb as r
-import argparse
 from pdb import set_trace
 from collections import defaultdict
-# import hashlib
 import logging
 import random
 
-parser = argparse.ArgumentParser()
-# parser.add_argument('--filename', '--file', '-f', required=True, help="file to write")
-# parser.add_argument('--change_db', default=False, action="store_true", help="perform changes to the DB (default: False)")
-parser.add_argument('--everything', default=False, action="store_true", help="Download everything (output can only JSON)")
-parser.add_argument('--sequences', default=False, action="store_true", help="Download sequence data only")
-parser.add_argument('--filename', '--file', '-f', required=True, help="Output filename (type is inferred from suffix)")
-parser.add_argument('--locus', default=None, help="Sequence locus to download (only used with --sequences)")
-parser.add_argument('--lineage', default=None, help="Sequence lineage to download (only used with --sequences)")
-parser.add_argument('--resolve_method', default="random", help="How to resolve duplicates (default: 'random')")
-# parser.add_argument("--verbose", "-v", action="store_const", dest="loglevel", const=logging.INFO, help="Enable verbose logging")
-parser.add_argument("--debug", "-d", action="store_const", dest="loglevel", const=logging.DEBUG, help="Enable debugging logging")
-
+def download(debug, database, dbdump, format, filename, resolve_method, subtype, locus, **kwargs):
+    pass
 def write_json(data, fname):
     logger = logging.getLogger(__name__)
     with open(fname, 'w') as f:
