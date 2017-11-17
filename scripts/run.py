@@ -33,6 +33,7 @@ if __name__=="__main__":
     if not args.loglevel:
         args.loglevel = logging.INFO
 
-    logging.basicConfig(level=args.loglevel, format='%(asctime)-15s %(levelname)s %(message)s')
-
+    logging.basicConfig(level=args.loglevel, format='%(asctime)s - %(name)-20s - %(levelname)-8s - %(message)s')
+    # this could be made more complex
+    # https://docs.python.org/2/howto/logging-cookbook.html#multiple-handlers-and-formatters
     args.func(**vars(args))
