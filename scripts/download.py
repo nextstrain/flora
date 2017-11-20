@@ -10,12 +10,12 @@ from utils.fasta import headers
 
 # local globals
 expected_table_names = ["dbinfo", "strains", "samples", "sequences", "attributions"]
+logger = logging.getLogger(__name__)
+
 
 def download(database, dbdump, outformat, filename, resolve_method, subtype, locus, **kwargs):
     rdb = connect(database)
-    logger = logging.getLogger(__name__)
     if not outformat: outformat = infer_ftype(filename)
-
     if dbdump:
         if outformat != "json":
             logger.error("Filtype must be json to save entire DB")
@@ -31,13 +31,11 @@ def download(database, dbdump, outformat, filename, resolve_method, subtype, loc
             write_fasta(data=data, headers=headers["default"], filename=filename)
 
 def write_json(data, filename):
-    logger = logging.getLogger(__name__)
     with open(filename, 'w') as f:
         json.dump(data, f, indent=2)
     logger.info("Successfully saved data to {}".format(filename))
 
 def infer_ftype(fname):
-    logger = logging.getLogger(__name__)
     if (fname.endswith(".fasta")):
         return "fasta"
     elif (fname.endswith(".json")):
@@ -46,7 +44,6 @@ def infer_ftype(fname):
     sys.exit(2)
 
 def add_filter_to_query(query, filterName, filterValue):
-    logger = logging.getLogger(__name__)
     if type(filterValue) is str:
         logger.info("Filtering to {} {}".format(filterName, filterValue))
         return query.filter(lambda r: r[filterName] == filterValue)
@@ -62,7 +59,6 @@ def resolve_duplicates(data, resolve_method):
     Removes all but one of these.
     TO DO: this method must be able to filter based on samples and sequences.
     '''
-    logger = logging.getLogger(__name__)
     # create duplicated_strains structure: all entries with multiple "strain_id"s
     duplicated_strains = defaultdict(list)
     for idx, row in enumerate(data):
@@ -90,7 +86,6 @@ def resolve_duplicates(data, resolve_method):
     return data
 
 def _check_table_names(rdb):
-    logger = logging.getLogger(__name__)
     table_names = rdb.table_list().run()
     assert(len(set(expected_table_names) - set(table_names)) == 0)
     if set(table_names) - set(expected_table_names):
@@ -100,7 +95,6 @@ def download_db(rdb, locus, subtype, **kwargs):
     """ download data and keep in the tables format (i.e. don't merge)
     locus and subtype filtering are applied
     """
-    logger = logging.getLogger(__name__)
     _check_table_names(rdb)
     q = {x: rdb.table(x) for x in expected_table_names}
     if subtype is not None:  q["strains"] = add_filter_to_query(q["strains"], 'subtype', subtype)
@@ -108,7 +102,6 @@ def download_db(rdb, locus, subtype, **kwargs):
     return {name: query.coerce_to('array').run() for name, query in q.iteritems()}
 
 def download_join(rdb, locus, subtype):
-    logger = logging.getLogger(__name__)
     query = rdb.table("sequences")
     if locus is not None:
         query = add_filter_to_query(query, 'sequence_locus', locus)
@@ -144,7 +137,6 @@ def write_fasta(data, headers, filename, join_char = '|'):
     """
     the data already arrives in rows - our task is to simply write these as FASTA entries...
     """
-    logger = logging.getLogger(__name__)
     missingCounts = [0 for x in headers]
     def _getEntry(row, idx, name):
         if name in row and row[name] is not None:

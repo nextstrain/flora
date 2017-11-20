@@ -5,10 +5,10 @@ from utils.tables_primary_keys import tables_primary_keys
 import logging
 from utils.connect import connect
 
+logger = logging.getLogger(__name__)
 
 def createDropTables(database, tables, cmd, **kwargs):
     rdb = connect(database)
-    logger = logging.getLogger(__name__)
     if cmd == "createTables":
         if tables == None:
             tables = tables_primary_keys

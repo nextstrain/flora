@@ -10,9 +10,10 @@ from utils.parsers import parse_sacra_json
 from utils.validate import check_json_for_orphans
 import logging
 
+logger = logging.getLogger(__name__)
+
 def upload(database, filename, preview, **kwargs):
     rdb = connect(database)
-    logger = logging.getLogger(__name__)
 
     ## check a file has been seen before - if novel, then cannot modify the DB
     seen = ensure_sacra_file_seen(filename, preview)
@@ -30,7 +31,6 @@ def upload(database, filename, preview, **kwargs):
             modify_db(rdb, table_name, rows, tables_primary_keys[table_name], preview, **kwargs)
 
 def modify_db(rdb, table_name, rows, pkey, preview, **kwargs):
-    logger = logging.getLogger(__name__)
     if preview:
         logger.info("Previewing modifications to table {}".format(table_name))
     else:
