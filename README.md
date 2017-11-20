@@ -30,5 +30,7 @@ To see command arguments, run `python scripts/run CMD -h`.
 
 * `python scripts/run.py createTables`
 * `python scripts/run.py clearTables`
-* `python scripts/run.py upload --filename <PATH> --preview`
-* `python scripts/run.py download --dbdump --filename downloaded_data/db.json`
+* `python scripts/run.py --debug upload --filename <PATH> --preview`
+* `python scripts/run.py --debug download --dbdump --filename downloaded_data/db.json`
+* `python scripts/run.py --debug download --filename downloaded_data/data.json`
+* `python scripts/run.py --debug download --filename downloaded_data/data.fasta`

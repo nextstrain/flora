@@ -21,27 +21,20 @@ def download(database, dbdump, outformat, filename, resolve_method, subtype, loc
             logger.error("Filtype must be json to save entire DB")
             sys.exit(2)
         data = download_db(rdb, locus, subtype, **kwargs)
-        write_data(outformat, filename, data)
+        write_json(data, filename)
     else:
         data = download_join(rdb, locus, subtype, )
         data = resolve_duplicates(data, resolve_method) # Perhaps this can be done in the DB logic??
         if outformat is "json":
-            pass
-#             tables = data_to_tables(data=data, db=r.db(dbname), tableNames=tableNames)
-#             write_json(tables, args.filename)
+            write_json(recreate_tables(rdb=rdb, data=data), filename)
         elif outformat is "fasta":
             write_fasta(data=data, headers=headers["default"], filename=filename)
 
-
-
-def write_data(outformat, filename, data):
+def write_json(data, filename):
     logger = logging.getLogger(__name__)
-    f = open(filename, 'w')
-    if outformat is "json":
+    with open(filename, 'w') as f:
         json.dump(data, f, indent=2)
-        logger.info("Successfully saved data to {} ({} format)".format(filename, outformat))
-
-    f.close()
+    logger.info("Successfully saved data to {}".format(filename))
 
 def infer_ftype(fname):
     logger = logging.getLogger(__name__)
@@ -167,3 +160,12 @@ def write_fasta(data, headers, filename, join_char = '|'):
     for i, n in enumerate(headers):
         if missingCounts[i] != 0:
             logger.debug("{}/{} samples were missing {}".format(missingCounts[i], len(data), n))
+
+def _extract_fields(data, fields):
+    return [{field: (line[field] if field in line else None) for field in fields} for line in data]
+
+def recreate_tables(rdb, data):
+    tables_fields = {name: rdb.table(name).map(lambda doc: doc.keys()).reduce(lambda uniq, doc: uniq.set_union(doc)).distinct().run() for name in expected_table_names if name is not "dbinfo"}
+    tables = {name: _extract_fields(data, fields) for name, fields in tables_fields.iteritems()}
+    tables["dbinfo"] = rdb.table("dbinfo").coerce_to("array").run()
+    return tables
