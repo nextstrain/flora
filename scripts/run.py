@@ -1,9 +1,12 @@
 from __future__ import division, print_function
+import sys, os
 import argparse
 import logging
+import time
 from createDropTables import createDropTables
 from upload import upload
 from download import download
+from utils.colorLogging import ColorizingStreamHandler
 
 if __name__=="__main__":
 
@@ -41,9 +44,8 @@ if __name__=="__main__":
     args = parser.parse_args()
 
     ## L O G G I N G
-    # this could be made more complex
     # https://docs.python.org/2/howto/logging-cookbook.html#multiple-handlers-and-formatters
-    if not args.loglevel:
-        args.loglevel = logging.INFO
-    logging.basicConfig(level=args.loglevel, format='%(asctime)s - %(name)-20s - %(levelname)-8s - %(message)s')
+    root_logger = logging.getLogger('')
+    root_logger.setLevel(args.loglevel if args.loglevel else logging.INFO)
+    root_logger.addHandler(ColorizingStreamHandler())
     args.func(**vars(args))
