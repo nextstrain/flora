@@ -3,7 +3,7 @@ import sys, os
 import argparse
 import logging
 import time
-from createDropTables import createDropTables
+from createDropTables import createDropTables, createDatabase
 from upload import upload
 from download import download
 from utils.colorLogging import ColorizingStreamHandler
@@ -18,6 +18,9 @@ if __name__=="__main__":
     parser.add_argument("--database", "--db", type=str, default="test", help="Name of the database (the pathogen name) [default: test]")
 
     subparsers = parser.add_subparsers(dest="cmd")
+
+    parser_createDatabase = subparsers.add_parser("createDatabase", help="Create a new database")
+    parser_createDatabase.set_defaults(func=createDatabase)
 
     parser_createTables = subparsers.add_parser("createTables", help="Create tables in an (already existing) database")
     parser_createTables.add_argument("--tables", default=None, help="tables to be created. Default: the normal set. TO DO: how to specify syntax here.")

@@ -28,6 +28,7 @@ Everything is run via `python scripts/run [global arguments] CMD [command argume
 Global arguments include `--debug` to increase logging verbosity, and `--database <str>` to define the database (pathogen) name (_currently defaults to "test", will be required at some point_).
 To see command arguments, run `python scripts/run CMD -h`.
 
+* `python scripts/run.py --database test createDatabase`
 * `python scripts/run.py createTables`
 * `python scripts/run.py clearTables`
 * `python scripts/run.py --debug upload --filename <PATH> --preview`

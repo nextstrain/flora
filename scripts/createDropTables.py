@@ -7,6 +7,14 @@ from utils.connect import connect
 
 logger = logging.getLogger(__name__)
 
+def createDatabase(database, **kwargs):
+    r = connect(None)
+    if database in r.db_list().run():
+        logger.critical("Cannot create database \"{}\" - it already exists".format(database))
+        sys.exit(2)
+    r.db_create(database).run()
+    logger.info("Created database \"{}\"".format(database))
+
 def createDropTables(database, tables, cmd, **kwargs):
     rdb = connect(database)
     if cmd == "createTables":

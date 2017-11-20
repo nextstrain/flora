@@ -9,7 +9,10 @@ def connect(database):
     logger = logging.getLogger(__name__)
     try:
         r.connect("localhost", 28015).repl()
-        rdb = r.db(database)
+        if database:
+            rdb = r.db(database)
+        else:
+            rdb = r
     except:
         logger.fatal("Error connecting to rethinkDB")
         os.exit(2)
