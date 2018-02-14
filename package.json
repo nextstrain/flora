@@ -8,8 +8,7 @@
   },
   "license": "AGPL",
   "author": "James Hadfield, Barney Potter, Trevor Bedford",
-  "dependencies": {
-  },
+  "dependencies": {},
   "scripts": {
     "chateau": "./chateau/bin/chateau"
   }
