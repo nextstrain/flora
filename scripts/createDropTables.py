@@ -7,16 +7,16 @@ from utils.connect import connect
 
 logger = logging.getLogger(__name__)
 
-def createDatabase(database, **kwargs):
-    r = connect(None)
+def createDatabase(database, rethink_host, auth_key, **kwargs):
+    r = connect(None, rethink_host, auth_key)
     if database in r.db_list().run():
         logger.critical("Cannot create database \"{}\" - it already exists".format(database))
         sys.exit(2)
     r.db_create(database).run()
     logger.info("Created database \"{}\"".format(database))
 
-def createDropTables(database, tables, cmd, **kwargs):
-    rdb = connect(database)
+def createDropTables(database, tables, cmd, rethink_host, auth_key, **kwargs):
+    rdb = connect(database, rethink_host, auth_key)
     if cmd == "createTables":
         if tables == None:
             tables = tables_primary_keys

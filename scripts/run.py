@@ -15,6 +15,8 @@ if __name__=="__main__":
     # parser.add_argument("--verbose", action="store_const", dest="loglevel", const=logging.INFO, help="Enable verbose logging")
     parser.add_argument("--debug", action="store_const", dest="loglevel", const=logging.DEBUG, help="Enable debugging logging")
     # parser.add_argument("--dryrun", action="store_true", help="Perform a dryrun without uploading or downloading any files")
+    parser.add_argument('--rethink_host', default=None, help="rethink host url")
+    parser.add_argument('--auth_key', default=None, help="auth_key for rethink database")
     parser.add_argument("--database", "--db", type=str, default="test", help="Name of the database (the pathogen name) [default: test]")
 
     subparsers = parser.add_subparsers(dest="cmd")
