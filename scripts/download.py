@@ -25,10 +25,15 @@ def download(database, dbdump, outformat, filename, resolve_method, subtype, loc
     else:
         data = download_join(rdb, locus, subtype, )
         data = resolve_duplicates(data, resolve_method) # Perhaps this can be done in the DB logic??
-        if outformat is "json":
+        if outformat == "json":
             write_json(recreate_tables(rdb=rdb, data=data), filename)
-        elif outformat is "fasta":
-            write_fasta(data=data, headers=headers["default"], filename=filename)
+        elif outformat == "fasta":
+            try:
+                headers_to_use = headers[database]
+            except KeyError:
+                logger.info("using default fasta headers as no entry for {}".format(database))
+                headers_to_use = headers["default"]
+            write_fasta(data=data, headers=headers_to_use, filename=filename)
 
 def write_json(data, filename):
     with open(filename, 'w') as f:
@@ -114,7 +119,7 @@ def download_join(rdb, locus, subtype):
     ## we must do attributions seperately as the table may be empty (cannot do map_concat etc), then merge in python
     attributions = {x["attribution_id"]: x for x in rdb.table("attributions").coerce_to("array").run()}
     for i in data:
-        if i["attribution"] in attributions:
+        if "attribution" in i and i["attribution"] in attributions:
             for k, v in attributions[i["attribution"]].iteritems():
                 if k not in i:
                     i[k] = v
