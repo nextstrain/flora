@@ -27,7 +27,7 @@ def check_json_for_orphans(tables):
             ## 1. check (e.g.) strain -> sample linkage (table A - B)
             ids_linked, ids_missing = _check_linkage(tables, tables_primary_keys[parent_table_name], parent_table_name, child_table_name)
             if len(ids_missing) == 0:
-                logger.info(u"Complete (forward) linkage between tables {} & {} \u2713".format(parent_table_name, child_table_name))
+                logger.info("Complete (forward) linkage between tables {} & {}".format(parent_table_name, child_table_name))
             else:
                 logger.warn("Incomplete (forward) linkage between tables {} & {}. These {} were unlinked: {}".format(parent_table_name, child_table_name, tables_primary_keys[parent_table_name], ids_missing))
 
@@ -35,6 +35,6 @@ def check_json_for_orphans(tables):
             ## this is made possible by the child table including the parent's primary key
             ids_linked, ids_missing = _check_linkage(tables, tables_primary_keys[parent_table_name], child_table_name, parent_table_name)
             if len(ids_missing) == 0:
-                logger.info(u"Complete (backwards) linkage between tables {} & {} \u2713".format(child_table_name, parent_table_name))
+                logger.info("Complete (backwards) linkage between tables {} & {}".format(child_table_name, parent_table_name))
             else:
                 logger.warn("Incomplete (backwards) linkage between tables {} & {}. These {} value were unlinked: {}".format(child_table_name, parent_table_name, tables_primary_keys[parent_table_name], ids_missing))

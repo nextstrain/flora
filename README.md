@@ -24,14 +24,15 @@ DB management, APIs, web portals etc. This project is still experimental.
 
 ## common commands (to be expanded into a tutorial / documentation)
 
+**these commands are currently only for testing - flora is not ready for production**
+
 Everything is run via `python scripts/run [global arguments] CMD [command arguments]`.
 Global arguments include `--debug` to increase logging verbosity, and `--database <str>` to define the database (pathogen) name (_currently defaults to "test", will be required at some point_).
 To see command arguments, run `python scripts/run CMD -h`.
 
-* `python scripts/run.py --database test createDatabase`
-* `python scripts/run.py createTables`
-* `python scripts/run.py clearTables`
-* `python scripts/run.py --debug upload --filename <PATH> --preview`
-* `python scripts/run.py --debug download --dbdump --filename downloaded_data/db.json`
-* `python scripts/run.py --debug download --filename downloaded_data/data.json`
-* `python scripts/run.py --debug download --filename downloaded_data/data.fasta`
+* `python scripts/run.py --db mumps --debug createDatabase`
+* `python scripts/run.py --db mumps --debug createTables`
+* `python scripts/run.py --db mumps --debug clearTables`
+* `python scripts/run.py --db mumps --debug upload -f ../sacra/output/piglets.json`
+* `python scripts/run.py --db mumps --debug download --dbdump --filename downloaded_data/db.json`
+* `python scripts/run.py --db mumps --debug download --filename downloaded_data/data.json`
