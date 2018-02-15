@@ -119,8 +119,8 @@ def download_join(rdb, locus, subtype):
     ## we must do attributions seperately as the table may be empty (cannot do map_concat etc), then merge in python
     attributions = {x["attribution_id"]: x for x in rdb.table("attributions").coerce_to("array").run()}
     for i in data:
-        if "attribution" in i and i["attribution"] in attributions:
-            for k, v in attributions[i["attribution"]].iteritems():
+        if i["attribution_id"] in attributions:
+            for k, v in attributions[i["attribution_id"]].iteritems():
                 if k not in i:
                     i[k] = v
     logger.info("DB query returned {} entries".format(len(data)))
