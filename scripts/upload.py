@@ -12,8 +12,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def upload(database, filename, preview, rethink_host, auth_key, **kwargs):
-    rdb = connect(database, rethink_host, auth_key)
+def upload(database, filename, preview, local, **kwargs):
+    rdb = connect(database, local)
 
     ## check a file has been seen before - if novel, then cannot modify the DB
     seen = ensure_sacra_file_seen(filename, preview)

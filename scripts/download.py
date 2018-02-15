@@ -13,8 +13,8 @@ expected_table_names = ["dbinfo", "strains", "samples", "sequences", "attributio
 logger = logging.getLogger(__name__)
 
 
-def download(database, dbdump, outformat, filename, resolve_method, subtype, locus, **kwargs):
-    rdb = connect(database)
+def download(database, dbdump, outformat, filename, resolve_method, subtype, locus, local, **kwargs):
+    rdb = connect(database, local)
     if not outformat: outformat = infer_ftype(filename)
     if dbdump:
         if outformat != "json":
