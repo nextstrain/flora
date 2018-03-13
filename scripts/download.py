@@ -13,17 +13,17 @@ expected_table_names = ["dbinfo", "strains", "samples", "sequences", "attributio
 logger = logging.getLogger(__name__)
 
 
-def download(database, dbdump, outformat, filename, resolve_method, subtype, locus, local, **kwargs):
+def download(database, dbdump, outformat, filename, resolve_method, subtype, segment, locus, local, **kwargs):
     rdb = connect(database, local)
     if not outformat: outformat = infer_ftype(filename)
     if dbdump:
         if outformat != "json":
             logger.error("Filtype must be json to save entire DB")
             sys.exit(2)
-        data = download_db(rdb, locus, subtype, **kwargs)
+        data = download_db(rdb, locus, subtype, segment, **kwargs)
         write_json(data, filename)
     else:
-        data = download_join(rdb, locus, subtype, )
+        data = download_join(rdb, locus, subtype, segment)
         data = resolve_duplicates(data, resolve_method) # Perhaps this can be done in the DB logic??
         if outformat == "json":
             write_json(recreate_tables(rdb=rdb, data=data), filename)
@@ -68,9 +68,11 @@ def resolve_duplicates(data, resolve_method):
     # create duplicated_strains structure: all entries with multiple "strain_id"s
     duplicated_strains = defaultdict(list)
     for idx, row in enumerate(data):
-        duplicated_strains[row['strain_id']].append(idx)
+        if 'segment' in row:
+            duplicated_strains[row['strain_id']+row['segment']].append(idx)
+        else:
+            duplicated_strains[row['strain_id']].append(idx)
     duplicated_strains = {k: v for k, v in duplicated_strains.iteritems() if len(v) > 1}
-
     if duplicated_strains == {}:
         logger.info("No duplicated isolates in data :)")
         return data
@@ -97,7 +99,7 @@ def _check_table_names(rdb):
     if set(table_names) - set(expected_table_names):
         logger.info("The DB contains these (unexpected) tables: {}. They will be ignored!".format([x for x in table_names if x not in expected_table_names]))
 
-def download_db(rdb, locus, subtype, **kwargs):
+def download_db(rdb, locus, subtype, segment, **kwargs):
     """ download data and keep in the tables format (i.e. don't merge)
     locus and subtype filtering are applied
     """
@@ -105,9 +107,10 @@ def download_db(rdb, locus, subtype, **kwargs):
     q = {x: rdb.table(x) for x in expected_table_names}
     if subtype is not None:  q["strains"] = add_filter_to_query(q["strains"], 'subtype', subtype)
     if locus   is not None:  q["sequences"] = add_filter_to_query(q["strains"], 'sequence_locus', locus)
+    if segment is not None:  q["sequences"] = add_filter_to_query(q["sequences"], 'segment', segment)
     return {name: query.coerce_to('array').run() for name, query in q.iteritems()}
 
-def download_join(rdb, locus, subtype):
+def download_join(rdb, locus, subtype, segment):
     query = rdb.table("sequences")
     if locus is not None:
         query = add_filter_to_query(query, 'sequence_locus', locus)
@@ -115,6 +118,8 @@ def download_join(rdb, locus, subtype):
     query = query.eq_join("strain_id", rdb.table("strains")).zip()
     if subtype is not None:
         query = add_filter_to_query(query, 'subtype', subtype)
+    if segment is not None:
+        query = add_filter_to_query(query, 'segment', segment)
     query = query.coerce_to("array")
     data = query.run()
     ## we must do attributions seperately as the table may be empty (cannot do map_concat etc), then merge in python
