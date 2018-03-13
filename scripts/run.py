@@ -43,6 +43,7 @@ if __name__=="__main__":
     parser_download.add_argument("--outformat", type=str, choices=['json', 'fasta'], help="output format")
     parser_download.add_argument("--filename", "-f", required=True, help="file to write")
     parser_download.add_argument('--resolve_method', default="random", help="How to resolve duplicates (default: 'random')")
+    parser_download.add_argument('--segment', default=None, help="Restrict download to this segment")
     parser_download.add_argument('--subtype', default=None, help="Restrict to this subtype (works with dbdump)")
     parser_download.add_argument('--locus', default=None, help="Restrict to this locus / segment (works with dbdump)")
     parser_download.set_defaults(func=download)
