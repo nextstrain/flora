@@ -2,7 +2,7 @@ from __future__ import print_function, division
 import rethinkdb as r
 import os, sys
 import logging
-from rethink_io import rethink_io
+# from rethink_io import rethink_io
 
 """ https://www.rethinkdb.com/docs/guide/python/ """
 
