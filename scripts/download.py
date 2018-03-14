@@ -29,6 +29,7 @@ def download(database, dbdump, outformat, filename, resolve_method, subtype, loc
             write_json(recreate_tables(rdb=rdb, data=data), filename)
         elif outformat == "fasta":
             try:
+                logger.debug("using headers from {}".format(database))
                 headers_to_use = headers[database]
             except KeyError:
                 logger.info("using default fasta headers as no entry for {}".format(database))
@@ -119,7 +120,7 @@ def download_join(rdb, locus, subtype):
     ## we must do attributions seperately as the table may be empty (cannot do map_concat etc), then merge in python
     attributions = {x["attribution_id"]: x for x in rdb.table("attributions").coerce_to("array").run()}
     for i in data:
-        if i["attribution_id"] in attributions:
+        if "attribution_id" in i.keys() and i["attribution_id"] in attributions:
             for k, v in attributions[i["attribution_id"]].iteritems():
                 if k not in i:
                     i[k] = v
@@ -148,7 +149,7 @@ def write_fasta(data, headers, filename, join_char = '|'):
             return row[name].replace(join_char, '//') ## not sure about this
         missingCounts[idx] += 1
         return ''
-    with open(filename, 'w') as f:
+    with open(filename, 'w+') as f:
         for row in data:
             f.write(">"+'|'.join([_getEntry(row, i, x) for i, x in enumerate(headers)])+"\n")
             f.write(row['sequence'])
