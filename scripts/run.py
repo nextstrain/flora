@@ -49,6 +49,11 @@ if __name__=="__main__":
 
     args = parser.parse_args()
 
+    if not os.path.isfile('./.sacra_hashes'):
+        p = './.sacra_hashes'
+        with open(p, 'a'):
+            os.utime(p, None)
+
     ## L O G G I N G
     # https://docs.python.org/2/howto/logging-cookbook.html#multiple-handlers-and-formatters
     root_logger = logging.getLogger('')
