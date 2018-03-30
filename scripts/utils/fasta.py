@@ -1,3 +1,7 @@
+"""
+The headers are keyed off of the database name (i.e. --db ... from the command line)
+"""
+
 headers = {
     "default": [
                 'accession',
@@ -36,5 +40,13 @@ headers = {
                 'division',
                 'host_species',
                 'number_sequences',
-                'region']
+                'region'],
+    "lassa": [
+        'accession',
+        'strain_name',
+        'collection_date',
+        'segment',
+        'country',
+        'region'
+    ]
 }
