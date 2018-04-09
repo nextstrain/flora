@@ -47,6 +47,10 @@ headers = {
         'collection_date',
         'segment',
         'country',
-        'region'
+        'region',
+        'authors',
+        'attribution_title',
+        'attribution_journal',
+        'attribution_url'
     ]
 }
