@@ -153,7 +153,7 @@ def write_fasta(data, headers, filename, join_char = '|'):
         if name in row and row[name] is not None:
             return row[name].replace(join_char, '//') ## not sure about this
         missingCounts[idx] += 1
-        return ''
+        return '?'
     with open(filename, 'w+') as f:
         for row in data:
             f.write(">"+'|'.join([_getEntry(row, i, x) for i, x in enumerate(headers)])+"\n")
